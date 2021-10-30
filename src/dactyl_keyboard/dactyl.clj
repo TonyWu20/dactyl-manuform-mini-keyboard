@@ -1581,23 +1581,17 @@
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 
-(spit "things/right.scad"
-      (write-scad model-right))
+;(spit "things/right.scad"
+      ;(write-scad model-right))
 
-(spit "things/left.scad"
-      (write-scad (mirror [-1 0 0] model-right)))
-
-(spit "things/right-test.scad"
-      (write-scad (union model-right
-                         thumbcaps-type
-                         caps)))
-
-(spit "things/right-plate.scad"
-      (write-scad
-        (extrude-linear
-          {:height 2.6 :center false}
+;(spit "things/left.scad"
+      ;(write-scad (mirror [-1 0 0] model-right)))
+; Playground for wrist rest building
+(def rest-base-cube (translate [-20 -75 3] (cube 150 150 6)))
+(def outer-wall (difference (union case-walls screw-insert-outers thumb-type thumb-connector-type)(translate [0 0 -20] (cube 350 350 40))))
+(def plate       (extrude-linear
+          {:height 6 :center false}
           (project
-            (difference
               (union
                 key-holes
                 key-holes-inner
@@ -1611,14 +1605,38 @@
                 thumbcaps-fill-type
                 caps-fill
                 screw-insert-outers)
-              (translate [0 0 -10] screw-insert-screw-holes))))))
+              )))
+(def inner-solid (extrude-linear {:height 6 :center false} (project (intersection rest-base-cube   plate))))
+(spit "things/right-test.scad"
+      (write-scad inner-solid))
 
-(spit "things/right-plate-laser.scad"
-      (write-scad
-       (cut
-        (translate [0 0 -0.1]
-                   (difference (union case-walls
-                                      screw-insert-outers)
-                               (translate [0 0 -10] screw-insert-screw-holes))))))
+;(spit "things/right-plate.scad"
+      ;(write-scad
+        ;(extrude-linear
+          ;{:height 2.6 :center false}
+          ;(project
+            ;(difference
+              ;(union
+                ;key-holes
+                ;key-holes-inner
+                ;pinky-connectors
+                ;extra-connectors
+                ;connectors
+                ;inner-connectors
+                ;thumb-type
+                ;thumb-connector-type
+                ;case-walls
+                ;thumbcaps-fill-type
+                ;caps-fill
+                ;screw-insert-outers)
+              ;(translate [0 0 -10] screw-insert-screw-holes))))))
+
+;(spit "things/right-plate-laser.scad"
+      ;(write-scad
+       ;(cut
+        ;(translate [0 0 -0.1]
+                   ;(difference (union case-walls
+                                      ;screw-insert-outers)
+                               ;(translate [0 0 -10] screw-insert-screw-holes))))))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
