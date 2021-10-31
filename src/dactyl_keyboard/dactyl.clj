@@ -14,8 +14,6 @@
 ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ;;quality settings;;;;;;;;;;;
 ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-(def wall-step 0.2)
-(def wall-sphere-n 30) ;;30 for high quality Sphere resolution, lower for faster renders mainly present on case edge top.  can effect wall thickness
 (def circle_facets 100)  ;;100 for high quality
 (def switch-type 1)
 (def hot_swappable 1)
@@ -42,7 +40,7 @@
 
 (def extra-row false)                   ; adds an extra bottom row to the outer columns
 (def inner-column false)                ; adds an extra inner column (two less rows than nrows)
-(def thumb-style "cf")                ; toggles between "default", "mini", and "cf" thumb cluster
+(def thumb-style "mini")                ; toggles between "default", "mini", and "cf" thumb cluster
 
 (def column-style :standard)
 
@@ -65,7 +63,7 @@
 
 (def wall-z-offset -8)                 ; length of the first downward-sloping part of the wall (negative)
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
-(def wall-thickness 2)                  ; wall thickness parameter; originally 5
+(def wall-thickness 2.5)                  ; wall thickness parameter; originally 5
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -125,15 +123,15 @@
 						(->>(cube 4 4 4)(translate [0 -2 0])))
 						(rotate (deg2rad 15) [1 0 0])(translate [6.35 2.540 0.5]))							
 				) (translate [-3.17 -1.27 1.65]))
-				(->> (cube 2.7 1.9 1.8)(translate [6.8 1.5 0])) ;right solder point on kalih socket
+                (->> (cube 2.7 1.9 1.8)(translate [6.8 1.5 0])) ;right solder point on kalih socket
 				(->> (cube 2.7 1.9 1.8)(translate [-6.8 -1.5 0]));;left solder point
 				)
 		)
 
 (def kalih_socket
 	(difference
-		(union (cube 12 (+  sla_tolerance 6) ( + 1.825 sla_tolerance)) 
-		Kalih_features)
+		(union (cube 12 (+  sla_tolerance 6) ( + 1.825 sla_tolerance))
+        Kalih_features)
 		(->> (cube 3.7   4  3)(translate [4.1 (- -3.05 (/ sla_tolerance 2)) 0])) ;;		(->> (cube 3.2 3 3)(translate [4.1 -2.6 0]))			
 ))
 
@@ -151,7 +149,7 @@
 				(->> (cube 9.1 1 2.5)(translate [0 0.9 -2.45])(rotate (deg2rad 15) [1 0 0]))  ;decreased translate y by ;;controls the clip in part of the kalih socket holder overhang
 		))
 		(difference
-			(->>( cube 3.8 2.3 1.)(translate [-3.6 -4.1 -2.0]) )  ;;to prevent cracking decreased cube y from 2.3 to 2
+			(->>( cube 3.8 2.3 2.4)(translate [-3.6 -4.1 -2]) )  ;;to prevent cracking decreased cube y from 2.3 to 2; increase z from 1 to 2.4 to meet SLA thickness requirement
 			;(->> (cube 4.8 1.8 0.9)(rotate (deg2rad 55) [1 0 0])(translate [-3.6 -3.25 -2.6]))
 )))
 (def kalih_tab_thumb
@@ -214,7 +212,7 @@
 (def hotswap_hole_sla
 	(->>(union 
 		MX_Clone_hole_hotswap
-		(->> kalih_cutout (translate [0 0 0]))
+        (->> kalih_cutout (translate [0 0 0]))
 	)(translate [0 0 0])(rotate (deg2rad 180) [0 0 1]))
 )
 
@@ -436,7 +434,7 @@
 ;; Web Connectors ;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(def web-thickness 4.5)
+(def web-thickness 4.8)
 (def post-size 0.1)
 (def web-post (->> (cube post-size post-size web-thickness)
                    (translate [0 0 (+ (/ web-thickness -2)
@@ -1432,7 +1430,7 @@
 
 (def notch-offset
   (case nrows
-    4 3.35
+    4 3.95
     5 0.15
     6 -5.07))
 
