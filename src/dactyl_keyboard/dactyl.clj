@@ -40,7 +40,7 @@
 
 (def extra-row false)                   ; adds an extra bottom row to the outer columns
 (def inner-column false)                ; adds an extra inner column (two less rows than nrows)
-(def thumb-style "cf")                ; toggles between "default", "mini", and "cf" thumb cluster
+(def thumb-style "mini")                ; toggles between "default", "mini", and "cf" thumb cluster
 
 (def column-style :standard)
 
@@ -63,7 +63,7 @@
 
 (def wall-z-offset -8)                 ; length of the first downward-sloping part of the wall (negative)
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
-(def wall-thickness 2)                  ; wall thickness parameter; originally 5
+(def wall-thickness 2.5)                  ; wall thickness parameter; originally 5
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -107,6 +107,7 @@
 
 (def single-plate
   (let [top-wall (->> (cube (+ keyswitch-width 3) 1.5 (+ plate-thickness 0.5))
+
                       (translate [0
                                   (+ (/ 1.5 2) (/ keyswitch-height 2))
                                   (- (/ plate-thickness 2) 0.25)]))
@@ -1322,7 +1323,7 @@
 
 (def notch-offset
   (case nrows
-    4 3.35
+    4 3.95
     5 0.15
     6 -5.07))
 
