@@ -34,7 +34,7 @@
 (def β (/ π 36))                        ; curvature of the rows
 (def centerrow (- nrows 3))             ; controls front-back tilt
 (def centercol 3)                       ; controls left-right tilt / tenting (higher number is more tenting)
-(def tenting-angle (/ π 8))            ; or, change this for more precise tenting control
+(def tenting-angle (/ π 6))            ; or, change this for more precise tenting control
 
 (def pinky-15u false)                   ; controls whether the outer column uses 1.5u keys
 (def first-15u-row 0)                   ; controls which should be the first row to have 1.5u keys on the outer column
@@ -58,7 +58,7 @@
 
 (def thumb-offsets [6 -3 7])
 
-(def keyboard-z-offset 12)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+(def keyboard-z-offset 14)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5
@@ -1581,17 +1581,18 @@
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 
-;(spit "things/right.scad"
-      ;(write-scad model-right))
+(spit "things/right.scad"
+      (write-scad model-right))
 
-;(spit "things/left.scad"
-      ;(write-scad (mirror [-1 0 0] model-right)))
-; Playground for wrist rest building
-(def rest-base-cube (translate [-20 -75 3] (cube 150 150 6)))
-(def outer-wall (difference (union case-walls screw-insert-outers thumb-type thumb-connector-type)(translate [0 0 -20] (cube 350 350 40))))
-(def plate       (extrude-linear
-          {:height 6 :center false}
+(spit "things/left.scad"
+      (write-scad (mirror [-1 0 0] model-right)))
+
+(spit "things/right-plate.scad"
+      (write-scad
+        (extrude-linear
+          {:height 2.6 :center false}
           (project
+            (difference
               (union
                 key-holes
                 key-holes-inner
@@ -1605,31 +1606,7 @@
                 thumbcaps-fill-type
                 caps-fill
                 screw-insert-outers)
-              )))
-(def inner-solid (extrude-linear {:height 6 :center false} (project (intersection rest-base-cube   plate))))
-(spit "things/right-test.scad"
-      (write-scad inner-solid))
-
-;(spit "things/right-plate.scad"
-      ;(write-scad
-        ;(extrude-linear
-          ;{:height 2.6 :center false}
-          ;(project
-            ;(difference
-              ;(union
-                ;key-holes
-                ;key-holes-inner
-                ;pinky-connectors
-                ;extra-connectors
-                ;connectors
-                ;inner-connectors
-                ;thumb-type
-                ;thumb-connector-type
-                ;case-walls
-                ;thumbcaps-fill-type
-                ;caps-fill
-                ;screw-insert-outers)
-              ;(translate [0 0 -10] screw-insert-screw-holes))))))
+              (translate [0 0 -10] screw-insert-screw-holes))))))
 
 ;(spit "things/right-plate-laser.scad"
       ;(write-scad
