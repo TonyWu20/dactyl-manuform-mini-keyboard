@@ -1529,7 +1529,7 @@
                                  trrs-notch
                                  usb-holder-notch
                                  screw-insert-holes))
-                   (translate [0 0 -20] (cube 350 350 40))))
+                   (translate [0 0 -22] (cube 350 350 40))))
 
 ;(spit "things/right.scad"
       ;(write-scad model-right))
@@ -1589,7 +1589,7 @@
    )
   (translate [0 -175 -20] (cube 350 350 40))
   (translate [0 -175 42] (cube 350 350 40))
-  (translate [0 -200 10] (cube 400 120 40))
+  (translate [0 -200 10] (cube 400 120 40)) ;cut at -140 in y-axis
   (translate [21.35 -220 20] (cube 20 400 40))
   (translate [(+ -10 -76.9) -240 20] (cube 20 400 60))
   cut-45deg-cube
@@ -1612,12 +1612,27 @@
         model-right
   )
   )
-(def main-cube (translate [-80 -150 10] (cube 20 20 20)))
+(def wr-back
+  (rotate (/ π -2) [1 0 0]
+  (extrude-rotate {:fn 20 :convexity 10 :angle -90}
+  (rotate (/ π 2) [0 0 1] 
+    (project
+    (rotate (/ π 2) [1 0 0] (translate [-11.35 0 0] wrist-rest)))
+                   )
+   )
+   )
+  )
 (spit "things/right-test.scad"
       (write-scad 
-        (->> model-right (color [1 0 1 1]))
+        ;(imprt "wrist-rest-test.stl")
+        ;(->> (difference model-ritht (translate [0 0 -20] (cube 350 350 40))) (color [1 0 1 1]))
+        (union
         wrist-rest
-        ;cut-45deg-cube
+        (->> wr-back
+             (rotate (/ π -2) [0 0 1])
+             (translate [11.35 -140 0])
+          )        ;cut-45deg-cube
+          )
                   ))
 
 
