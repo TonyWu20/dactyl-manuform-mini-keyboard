@@ -152,7 +152,7 @@
         wire-track (cube 4 (+ keyswitch-height 3) 1.8)
         column-wire-track (->> wire-track
                                (translate [9.5 0 -2.6]))
-        diode-wire-track (->> (cube 3 17.15 1.8)
+        diode-wire-track (->> (cube 3 (+ keyswitch-height 3) 1.8)
                               (translate [-8 8 -2.6]))
         hotswap-base (union
                       (difference hotswap-base-shape
