@@ -11,16 +11,6 @@
 (defn replace-last [coll x]
   (concat (butlast coll) [x]))
 
-;@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-;;quality settings;;;;;;;;;;;
-;@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-(def circle_facets 100)  ;;100 for high quality
-(def switch-type 1)
-(def hot_swappable 1)
-(def sla_tolerance 1)
-
-(def cherry-keyswitch-height 14.4) ;; Was 14.1, then 14.25
-(def cherry-keyswitch-width 14.4)
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Shape parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -40,7 +30,7 @@
 
 (def extra-row false)                   ; adds an extra bottom row to the outer columns
 (def inner-column false)                ; adds an extra inner column (two less rows than nrows)
-(def thumb-style "mini")                ; toggles between "default", "mini", and "cf" thumb cluster
+(def thumb-style "cf")                ; toggles between "default", "mini", and "cf" thumb cluster
 
 (def column-style :standard)
 
@@ -143,7 +133,6 @@
      (->>
       top-nub-pair
       (rotate (/ π 2) [0 0 1])))))
-
 
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
@@ -286,6 +275,19 @@
                          (not= row lastrow))]
            (->> single-plate
                 ;                (rotate (/ π 2) [0 0 1])
+                (key-place column row)))))
+(def key-holes-left
+  (apply union
+         (for [column columns
+               row rows
+               :when (or (.contains [(+ innercol-offset 2) (+ innercol-offset 3)] column)
+                         (and (.contains [(+ innercol-offset 4) (+ innercol-offset 5)] column) extra-row (= ncols (+ innercol-offset 6)))
+                         (and (.contains [(+ innercol-offset 4)] column) extra-row (= ncols (+ innercol-offset 5)))
+                         (and inner-column (not= row cornerrow)(= column 0))
+                         (not= row lastrow))]
+           (->> single-plate
+                ;                (rotate (/ π 2) [0 0 1])
+                (mirror [-1 0 0])
                 (key-place column row)))))
 (def caps
   (apply union
@@ -1374,7 +1376,7 @@
 (when (and (= thumb-style "cf") (false? inner-column))
     (def screw-offset-bl [-9.5 1.5 0])
     (def screw-offset-tm [10.5 -4.5 0])
-    (def screw-offset-bm [12.5  -5.5 0]))
+    (def screw-offset-bm [12.5 -5.5 0]))
 (when (and (= thumb-style "mini") inner-column)
     (def screw-offset-bl [14 8 0])
     (def screw-offset-tm [9.5 -4.5 0])
