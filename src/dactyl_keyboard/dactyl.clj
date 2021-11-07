@@ -53,7 +53,7 @@
 
 (def wall-z-offset -8)                 ; length of the first downward-sloping part of the wall (negative)
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
-(def wall-thickness 2.5)                  ; wall thickness parameter; originally 5
+(def wall-thickness 2)                  ; wall thickness parameter; originally 5
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -78,6 +78,7 @@
 (def lastcol (dec ncols))
 (def extra-cornerrow (if extra-row lastrow cornerrow))
 (def innercol-offset (if inner-column 1 0))
+(def current-side "right") ; to generate hotswap_holder correctly in single-plate func
 
 ;;;;;;;;;;;;;;;;;
 ;; Switch Hole ;;
@@ -95,7 +96,7 @@
 (def mount-width (+ keyswitch-width 3.2))
 (def mount-height (+ keyswitch-height 2.7))
 
-(def single-plate
+ (def single-plate
   (let [top-wall (->> (cube (+ keyswitch-width 3) 1.5 (+ plate-thickness 0.5))
 
                       (translate [0
@@ -108,32 +109,82 @@
         side-nub (->> (binding [*fn* 30] (cylinder 1 2.75))
                       (rotate (/ π 2) [1 0 0])
                       (translate [(+ (/ keyswitch-width 2)) 0 1])
-                      (hull (->> (cube 1.5 2.75 side-nub-thickness)
+                      (hull (->> (cube 1.5 2.75 plate-thickness)
                                  (translate [(+ (/ 1.5 2) (/ keyswitch-width 2))
                                              0
-                                             (/ side-nub-thickness 2)])))
-                      (translate [0 0 (- plate-thickness side-nub-thickness)]))
-        plate-half (union top-wall left-wall (if create-side-nubs? (with-fn 100 side-nub)))
+                                             (/ plate-thickness 2)]))))
         top-nub (->> (cube 5 5 retention-tab-hole-thickness)
                      (translate [(+ (/ keyswitch-width 2.5)) 0 (- (/ retention-tab-hole-thickness 2) 0.5)]))
         top-nub-pair (union top-nub
                             (->> top-nub
                                  (mirror [1 0 0])
                                  (mirror [0 1 0])))
-        hotswap_holder (->> ( import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
-                            (translate [0 0 3.5])
-                            )
-        ]
-    (difference
-     (union hotswap_holder
-            plate-half
-            (->> plate-half
-                 (mirror [1 0 0])
-                 (mirror [0 1 0])))
-     (->>
-      top-nub-pair
-      (rotate (/ π 2) [0 0 1])))))
-
+        plate-half (union top-wall
+                          left-wall
+                          (if create-side-nubs? (with-fn 100 side-nub) ()))
+        swap-holder (->> (cube (+ keyswitch-width 3) (/ (+ keyswitch-height 3) 2) 3)
+                         (translate [0 (/ (+ keyswitch-height 3) 4) -2])
+                         ;(color [0 0 1 1])
+                         )
+        main-axis-hole (->> (cylinder (/ 4.0 2) 10)
+                            (with-fn 30))
+        plus-hole (->> (cylinder (/ 2.4 2) 10)
+                       (with-fn 30)
+                       (translate [-3.81 2.54 0]))
+        minus-hole (->> (cylinder (/ 2.4 2) 10)
+                        (with-fn 30)
+                        (translate [2.54 5.08 0]))
+        friction-hole (->> (cylinder (/ 1.7 2) 10)
+                           (with-fn 12)
+                           (color [1 0 0 1]))
+        friction-hole-right (translate [5 0 3] friction-hole)
+        friction-hole-left (translate [-5 0 3] friction-hole)
+        hotswap-base-shape (->> (cube 14 5.80 1.8)
+                                (translate [-1 4 -2.6]))
+        hotswap-base-hold-shape (->> (cube (/ 11 2) (- 6.2 4) 1.8)
+                                     (translate [(/ 12 4) (/ (- 6.2 4) 1) -2.6])
+                                     (color [ 1 0 0 1 ]))
+        hotswap-pad (cube 4.00 3.0 2)
+        hotswap-pad-plus (translate [(- 0 (+ (/ 12.9 2) (/ 2.55 2))) 2.54 -2.6]
+                                    hotswap-pad)
+        hotswap-pad-minus (translate [(+ (/ 10.9 2) (/ 2.55 2)) 5.08 -2.6]
+                                     hotswap-pad)
+        wire-track (cube 4 (+ keyswitch-height 3) 1.8)
+        column-wire-track (->> wire-track
+                               (translate [9.5 0 -2.6]))
+        diode-wire-track (->> (cube 3 17.15 1.8)
+                              (translate [-8 8 -2.6]))
+        hotswap-base (union
+                      (difference hotswap-base-shape
+                                  hotswap-base-hold-shape)
+                      hotswap-pad-plus
+                      hotswap-pad-minus)
+        diode-holder (->> (cube 2 4 1.8)
+                          (translate [-7 5 -2.6]))
+        hotswap-holder (difference swap-holder
+                                   main-axis-hole
+                                   plus-hole
+                                   (mirror [-1 0 0] plus-hole)
+                                   minus-hole
+                                   (mirror [-1 0 0] minus-hole)
+                                   friction-hole-left
+                                   friction-hole-right
+                                   hotswap-base
+                                   (mirror [-1 0 0] hotswap-base))]
+    (rotate π [0 0 1]
+            (difference (union plate-half
+                       (->> plate-half
+                            (mirror [1 0 0])
+                            (mirror [0 1 0]))
+                       hotswap-holder
+                       )
+                 (->>
+                top-nub-pair
+                (rotate (/ π 2) [0 0 1]))
+                diode-holder
+                diode-wire-track
+                column-wire-track)
+            )))
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
 ;;;;;;;;;;;;;;;;
@@ -287,7 +338,6 @@
                          (not= row lastrow))]
            (->> single-plate
                 ;                (rotate (/ π 2) [0 0 1])
-                (mirror [-1 0 0])
                 (key-place column row)))))
 (def caps
   (apply union
@@ -1317,7 +1367,7 @@
 ; Offsets for the controller/trrs holder cutout
 (def holder-offset
   (case nrows
-    4 -3.25
+    4 -3.5
     5 0
     6 (if inner-column
           3.2
@@ -1325,7 +1375,7 @@
 
 (def notch-offset
   (case nrows
-    4 3.95
+    4 3.35
     5 0.15
     6 -5.07))
 
@@ -1455,7 +1505,18 @@
                (key-place lastcol (inc row) wide-post-tr)
                (key-place lastcol (inc row) web-post-tr))))
 ))))
-
+(def hotswap-holder
+  (apply union
+         (for [column columns
+               row rows
+               :when (or (.contains [(+ innercol-offset 2) (+ innercol-offset 3)] column)
+                         (and (.contains [(+ innercol-offset 4) (+ innercol-offset 5)] column) extra-row (= ncols (+ innercol-offset 6)))
+                         (and (.contains [(+ innercol-offset 4)] column) extra-row (= ncols (+ innercol-offset 5)))
+                         (and inner-column (not= row cornerrow)(= column 0))
+                         (not= row lastrow))]
+           (->> single-plate
+                ;                (rotate (/ π 2) [0 0 1])
+                (key-place column row)))))
 (def model-right (difference
                    (union
                      key-holes
@@ -1474,16 +1535,32 @@
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 
+(def model-left (difference
+                   (union
+                     key-holes
+                     key-holes-inner
+                     pinky-connectors
+                     extra-connectors
+                     connectors
+                     inner-connectors
+                     thumb-type
+                     thumb-connector-type
+                     (difference (union case-walls
+                                        screw-insert-outers)
+                                 usb-holder-space
+                                 trrs-notch
+                                 usb-holder-notch
+                                 screw-insert-holes))
+                   (translate [0 0 -20] (cube 350 350 40))))
 (spit "things/right.scad"
       (write-scad model-right))
 
 (spit "things/left.scad"
-      (write-scad (mirror [-1 0 0] model-right)))
+      (write-scad (mirror [-1 0 0] model-left)))
 
 (spit "things/right-test.scad"
-      (write-scad (union model-right
-                         thumbcaps-type
-                         caps)))
+      (write-scad (union single-plate
+                         )))
 
 (spit "things/right-plate.scad"
       (write-scad
