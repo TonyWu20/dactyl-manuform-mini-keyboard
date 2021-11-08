@@ -122,55 +122,9 @@
         plate-half (union top-wall
                           left-wall
                           (if create-side-nubs? (with-fn 100 side-nub) ()))
-        swap-holder (->> (cube (+ keyswitch-width 3) (/ (+ keyswitch-height 3) 2) 3)
-                         (translate [0 (/ (+ keyswitch-height 3) 4) -2])
-                         ;(color [0 0 1 1])
-                         )
-        main-axis-hole (->> (cylinder (/ 4.0 2) 10)
-                            (with-fn 30))
-        plus-hole (->> (cylinder (/ 2.4 2) 10)
-                       (with-fn 30)
-                       (translate [-3.81 2.54 0]))
-        minus-hole (->> (cylinder (/ 2.4 2) 10)
-                        (with-fn 30)
-                        (translate [2.54 5.08 0]))
-        friction-hole (->> (cylinder (/ 1.7 2) 10)
-                           (with-fn 12)
-                           (color [1 0 0 1]))
-        friction-hole-right (translate [5 0 3] friction-hole)
-        friction-hole-left (translate [-5 0 3] friction-hole)
-        hotswap-base-shape (->> (cube 14 5.80 1.8)
-                                (translate [-1 4 -2.6]))
-        hotswap-base-hold-shape (->> (cube (/ 11 2) (- 6.2 4) 1.8)
-                                     (translate [(/ 12 4) (/ (- 6.2 4) 1) -2.6])
-                                     (color [ 1 0 0 1 ]))
-        hotswap-pad (cube 4.00 3.0 2)
-        hotswap-pad-plus (translate [(- 0 (+ (/ 12.9 2) (/ 2.55 2))) 2.54 -2.6]
-                                    hotswap-pad)
-        hotswap-pad-minus (translate [(+ (/ 10.9 2) (/ 2.55 2)) 5.08 -2.6]
-                                     hotswap-pad)
-        wire-track (cube 4 (+ keyswitch-height 3) 1.8)
-        column-wire-track (->> wire-track
-                               (translate [9.5 0 -2.6]))
-        diode-wire-track (->> (cube 3 (+ keyswitch-height 3) 1.8)
-                              (translate [-8 8 -2.6]))
-        hotswap-base (union
-                      (difference hotswap-base-shape
-                                  hotswap-base-hold-shape)
-                      hotswap-pad-plus
-                      hotswap-pad-minus)
-        diode-holder (->> (cube 2 4 1.8)
-                          (translate [-7 5 -2.6]))
-        hotswap-holder (difference swap-holder
-                                   main-axis-hole
-                                   plus-hole
-                                   (mirror [-1 0 0] plus-hole)
-                                   minus-hole
-                                   (mirror [-1 0 0] minus-hole)
-                                   friction-hole-left
-                                   friction-hole-right
-                                   hotswap-base
-                                   (mirror [-1 0 0] hotswap-base))]
+        hotswap-holder (->> (import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
+                            (translate [0 0 3.5]))
+        ]
     (rotate π [0 0 1]
             (difference (union plate-half
                        (->> plate-half
@@ -181,9 +135,7 @@
                  (->>
                 top-nub-pair
                 (rotate (/ π 2) [0 0 1]))
-                diode-holder
-                diode-wire-track
-                column-wire-track)
+                )
             )))
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
@@ -1535,6 +1487,56 @@
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 
+(spit "things/right.scad"
+      (write-scad model-right))
+
+(def single-plate
+  (let [top-wall (->> (cube (+ keyswitch-width 3) 1.5 (+ plate-thickness 0.5))
+
+                      (translate [0
+                                  (+ (/ 1.5 2) (/ keyswitch-height 2))
+                                  (- (/ plate-thickness 2) 0.25)]))
+        left-wall (->> (cube 1.8 (+ keyswitch-height 3) (+ plate-thickness 0.5))
+                       (translate [(+ (/ 1.8 2) (/ keyswitch-width 2))
+                                   0
+                                   (- (/ plate-thickness 2) 0.25)]))
+        side-nub (->> (binding [*fn* 30] (cylinder 1 2.75))
+                      (rotate (/ π 2) [1 0 0])
+                      (translate [(+ (/ keyswitch-width 2)) 0 1])
+                      (hull (->> (cube 1.5 2.75 plate-thickness)
+                                 (translate [(+ (/ 1.5 2) (/ keyswitch-width 2))
+                                             0
+                                             (/ plate-thickness 2)]))))
+        top-nub (->> (cube 5 5 retention-tab-hole-thickness)
+                     (translate [(+ (/ keyswitch-width 2.5)) 0 (- (/ retention-tab-hole-thickness 2) 0.5)]))
+        top-nub-pair (union top-nub
+                            (->> top-nub
+                                 (mirror [1 0 0])
+                                 (mirror [0 1 0])))
+        plate-half (union top-wall
+                          left-wall
+                          (if create-side-nubs? (with-fn 100 side-nub) ()))
+        hotswap-holder (->> (import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
+                            (translate [0 0 3.5])
+                            (mirror [-1 0 0]))
+        ]
+    (rotate π [0 0 1]
+            (difference (union plate-half
+                       (->> plate-half
+                            (mirror [1 0 0])
+                            (mirror [0 1 0]))
+                       hotswap-holder
+                       )
+                 (->>
+                top-nub-pair
+                (rotate (/ π 2) [0 0 1]))
+                )
+            )))
+(def cfthumb
+  (union
+   (cfthumb-1x-layout single-plate)
+   (cfthumb-15x-layout larger-plate-half)
+   (cfthumb-15x-layout single-plate)))
 (def model-left (difference
                    (union
                      key-holes
@@ -1543,7 +1545,7 @@
                      extra-connectors
                      connectors
                      inner-connectors
-                     thumb-type
+                     cfthumb
                      thumb-connector-type
                      (difference (union case-walls
                                         screw-insert-outers)
@@ -1552,9 +1554,6 @@
                                  usb-holder-notch
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
-(spit "things/right.scad"
-      (write-scad model-right))
-
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-left)))
 
