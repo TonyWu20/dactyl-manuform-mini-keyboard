@@ -1473,7 +1473,7 @@
 
 (spit "things/right.scad"
       (write-scad model-right #_usb-trrs-holder-space
-                  (->> external-holder (translate [-174.3 -81.5 0]))
+                  #_(->> external-holder (translate [-174.3 -81.5 0]))
                   ))
 ; handle unnecessary mirroring of hotswap-holder
 (def single-plate-left
