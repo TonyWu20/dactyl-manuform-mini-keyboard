@@ -1551,10 +1551,166 @@
                    (translate [0 0 -20] (cube 350 350 40))))
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-left)))
-
+;;;;;;;;;;;;;;
+; wrist-rest ;
+;;;;;;;;;;;;;;
+(defn rest-interface [shape]
+  (difference
+      shape
+      (translate [0 0 -20] (cube 350 350 40))
+      (translate [0 0 42]  (cube 200 200 40))
+  )
+  )
+(defn wall-brace-out [place1 dx1 dy1 post1 place2 dx2 dy2 post2]
+  (union
+   (hull ;connect the original generated part and the translated part
+                 (
+                  hull
+                  (place1 post1)
+                  (place1 (translate (wall-locate3 dx1 dy1) post1)); only wall-locate3 to generate the outmost surface of the wall
+                  (place2 post2)
+                  (place2 (translate (wall-locate3 dx2 dy2) post2))
+                  )
+     (translate [0 -100 0] ;translate this part by 150 mm along y-axis
+      (hull
+       (place1 post1)
+       (place1 (translate (wall-locate3 dx1 dy1) post1))
+       (place2 post2)
+       (place2 (translate (wall-locate3 dx2 dy2) post2))
+       )
+     )
+   )
+   (hull ;same idea as the previous part
+                (
+                 bottom-hull
+                 (place1 (translate (wall-locate3 dx1 dy1) post1))
+                 (place2 (translate (wall-locate3 dx2 dy2) post2))
+                 )
+     (translate [0 -100 0]
+     (bottom-hull
+      (place1 (translate (wall-locate3 dx1 dy1) post1))
+      (place2 (translate (wall-locate3 dx2 dy2) post2))
+     )
+     )
+   )
+  )
+)
+(defn wall-brace-out2 [place1 dx1 dy1 post1 place2 dx2 dy2 post2]
+  (union
+   (hull ;connect the original generated part and the translated part
+                 (
+                  hull
+                  (place2 post2)
+                  (place2 (translate (wall-locate3 dx2 dy2) post2))
+                  )
+     (translate [0 -100 0] ;translate this part by 150 mm along y-axis
+      (hull
+       (place2 post2)
+       (place2 (translate (wall-locate3 dx2 dy2) post2))
+       )
+     )
+   )
+   (hull ;same idea as the previous part
+                (
+                 bottom-hull
+                 (place1 (translate (wall-locate3 dx1 dy1) post1))
+                 (place2 (translate (wall-locate3 dx2 dy2) post2))
+                 )
+     (translate [0 -100 0]
+     (bottom-hull
+      (place1 (translate (wall-locate3 dx1 dy1) post1))
+      (place2 (translate (wall-locate3 dx2 dy2) post2))
+     )
+     )
+   )
+  )
+)
+(defn key-wall-brace-out [x1 y1 dx1 dy1 post1 x2 y2 dx2 dy2 post2]
+  (wall-brace-out (partial key-place x1 y1) dx1 dy1 post1
+              (partial key-place x2 y2) dx2 dy2 post2))
+(def thumb-mrtr (rest-interface (wall-brace-out cfthumb-mr-place  0 -1 web-post-br cfthumb-tr-place  0 -1 web-post-br)))
+(def thumb-mrmr (rest-interface (wall-brace-out cfthumb-mr-place  0 -1 web-post-br cfthumb-mr-place  0  -1.15 web-post-bl)))
+(def thumb-brbr (rest-interface (wall-brace-out2 cfthumb-br-place  0 -1 web-post-br cfthumb-br-place  0 -1 web-post-bl)))
+(def thumb-corner (rest-interface (wall-brace-out2 cfthumb-br-place -1  0 web-post-bl cfthumb-br-place  0 -1 web-post-bl)))
+(def thumb-corner-ori (rest-interface (wall-brace cfthumb-br-place -1  0 web-post-bl cfthumb-br-place  0 -1 web-post-bl)))
+(def thumb-mrbr (rest-interface (wall-brace-out cfthumb-mr-place  0 -1.15 web-post-bl cfthumb-br-place  0 -1 web-post-br)))
+(def thumb-trkey (rest-interface (wall-brace-out cfthumb-tr-place  0 -1 web-post-br (partial key-place (+ innercol-offset 3) lastrow)  0 -1 web-post-bl)))
+(def front-blbr (rest-interface (key-wall-brace-out (+ innercol-offset 3) lastrow  0 -1 web-post-bl (+ innercol-offset 3) lastrow   0 -1 web-post-br)))
+(def test-brace (bottom-hull 
+                  ;(cfthumb-br-place (translate (wall-locate2 0 -1) web-post-br))
+                  (cfthumb-br-place (translate (wall-locate3 0 -1) web-post-br))
+                  ;(cfthumb-br-place (translate (wall-locate2 0 -1) web-post-bl))
+                  (cfthumb-br-place (translate (wall-locate3 0 -1) web-post-bl))
+                  ))
+(def cut-45deg-cube (->> (translate [0 -200 66] (cube 350 350 20))
+                         (rotate (/ π -4.68859) [0 1 0])))
+(def need-walls
+  (difference 
+  (union
+    (->> thumb-mrtr           
+     (color [1 0.25 0 1])
+     )
+   (->> thumb-mrmr (color [0.75 0.25 0 1]))
+   (->> thumb-brbr
+          (color [0   1 0 1])) 
+   ; cfthumb corners
+   ;(->> 
+      ;thumb-corner 
+     ;)
+   ; cfthumb tweeners
+   (->> thumb-mrbr (color [0.3 0.5 0.5 1])); not exposed to outside
+   (->> thumb-trkey (color [0.25 0.25 0.75 1])) 
+   
+   ; front wall
+   (->> front-blbr (color [0.3 0.3 0 1]))
+   (->> (key-wall-brace-out (+ innercol-offset 3) lastrow  0 -1 web-post-br (+ innercol-offset 4) extra-cornerrow 0 -1 web-post-bl) 
+               (color [1 0 0 1])
+               (translate [0 0 0]))
+   (->> (difference 
+        (for [x (range (+ innercol-offset 4) ncols)] (key-wall-brace-out x extra-cornerrow 0 -1 web-post-bl x       extra-cornerrow 0 -1 web-post-br))
+        (for [x (range (+ innercol-offset 4) ncols)] (key-wall-brace x extra-cornerrow 0 -1 web-post-bl x       extra-cornerrow 0 -1 web-post-br))
+        
+    ))   (for [x (range (+ innercol-offset 5) ncols)] (key-wall-brace-out x extra-cornerrow 0 -1 web-post-bl (dec x) extra-cornerrow 0 -1 web-post-br))
+   )
+  (translate [0 -175 -20] (cube 350 350 40))
+  (translate [0 -175 42] (cube 350 350 40))
+  (translate [0 -200 10] (cube 400 120 40)) ;cut at -140 in y-axis
+  (translate [21.35 -220 20] (cube 20 400 40))
+  (translate [(+ -10 -76.9) -240 20] (cube 20 400 60))
+  cut-45deg-cube
+  )
+)
+(def wrist-rest-cube
+  (difference
+        (translate [0 0 0] need-walls)
+        model-right
+        (translate [0 -51 30] (cube 25 25 60))
+  )
+  )
+(def wr-back
+  (rotate (/ π -2) [1 0 0]
+  (extrude-rotate {:fn 20 :convexity 10 :angle -90}
+  (rotate (/ π 2) [0 0 1] 
+    (project
+    (rotate (/ π 2) [1 0 0] (translate [-11.35 0 0] wrist-rest-cube)))
+                   )
+   )
+   )
+  )
+(def wrist-rest (union
+        wrist-rest-cube
+        (->> wr-back
+             (rotate (/ π -2) [0 0 1])
+             (translate [11.35 -140 0])
+          )        ;cut-45deg-cube
+          ))
 (spit "things/right-test.scad"
       (write-scad (union single-plate
                          )))
+
+(spit "things/right-wrist-rest-test.scad"
+      (write-scad wrist-rest)
+      )
 
 (spit "things/right-plate.scad"
       (write-scad
