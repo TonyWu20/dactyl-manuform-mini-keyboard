@@ -40,20 +40,20 @@
           (= column 3) [0 2.82 -4.5]
           (>= column 5) [0 -12 5.64]    ; original [0 -5.8 5.64]
           :else [0 0 0])
-    (cond (= column 2) [0 2.82 -4.5]
-          (>= column 4) [0 -12 5.64]    ; original [0 -5.8 5.64]
+    (cond (= column 2) [0 4.82 -4.5]
+          (>= column 4) [0 -14 5.64]    ; original [0 -5.8 5.64]
           :else [0 0 0])))
 
 (def thumb-offsets [6 -3 4])
 
-(def keyboard-z-offset 8)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+(def keyboard-z-offset 12)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5
 
-(def wall-z-offset -6)                 ; length of the first downward-sloping part of the wall (negative)
-(def wall-xy-offset 10)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
-(def wall-thickness 3)                  ; wall thickness parameter; originally 5
+(def wall-z-offset -4)                 ; length of the first downward-sloping part of the wall (negative)
+(def wall-xy-offset 8)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
+(def wall-thickness 2)                  ; wall thickness parameter; originally 5
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -67,7 +67,7 @@
 
 ; If you use Cherry MX or Gateron switches, this can be turned on.
 ; If you use other switches such as Kailh, you should set this as false
-(def create-side-nubs? true)
+(def create-side-nubs? false)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; General variables ;;
@@ -78,7 +78,6 @@
 (def lastcol (dec ncols))
 (def extra-cornerrow (if extra-row lastrow cornerrow))
 (def innercol-offset (if inner-column 1 0))
-(def current-side "right") ; to generate hotswap_holder correctly in single-plate func
 
 ;;;;;;;;;;;;;;;;;
 ;; Switch Hole ;;
@@ -1320,11 +1319,45 @@
     6 -5.07))
 
 ; Cutout for controller/trrs jack holder
-(def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
-(def usb-holder-position (map + [(+ 18.8 holder-offset) 18.7 1.3] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-space  (translate (map + usb-holder-position [-1.5 (* -1 wall-thickness) 2.9]) (cube 28.666 26.8 12.4)))
-(def usb-holder-notch  (translate (map + usb-holder-position [-1.5 (+ 4.4 notch-offset) 2.9]) (cube 31.366 1.3 12.4)))
-(def trrs-notch        (translate (map + usb-holder-position [-10.33 (+ 3.6 notch-offset) 6.6]) (cube 8.4 2.4 19.8)))
+;(def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
+;(def usb-holder-position (map + [(+ 18.8 holder-offset) 18.7 1.3] [(first usb-holder-ref) (second usb-holder-ref) 2]))
+;(def usb-holder-space  (translate (map + usb-holder-position [-1.5 (* -1 wall-thickness) 2.9]) (cube 28.666 26.8 12.4)))
+;(def usb-holder-notch  (translate (map + usb-holder-position [-1.5 (+ 4.4 notch-offset) 2.9]) (cube 31.366 1.3 12.4)))
+;(def trrs-notch        (translate (map + usb-holder-position [-10.33 (+ 3.6 notch-offset) 6.6]) (cube 8.4 2.4 19.8)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Vertical USB holder ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rotate-shape-on-z [angle shape] 
+  (rotate (deg2rad angle) [0 0 1] shape))
+(def usb-holder-stl (import "./pro_micro_holder_vertical.stl"))
+(def usb-holder-cutout-stl (import "./usb_holder_vertical_cutout.stl"))
+(def usb-holder-cutout-height 61.2)
+(def usb-holder-clearance 0.2)
+(def usb-holder-bottom-offset 0.15)
+(def usb-holder-z-rotate 0)
+(def usb-holder-offset-coordinates [-46 41.9 usb-holder-bottom-offset])
+(defn usb-holder-place [shape]
+  (->> shape
+       (translate usb-holder-offset-coordinates)
+       (rotate-shape-on-z usb-holder-z-rotate)
+   ))
+
+(def usb-holder (usb-holder-place usb-holder-stl))
+(def usb-holder-space
+  (let [usb-holder-cutout (usb-holder-place
+                            usb-holder-cutout-stl)
+        cutout (translate [0 0 (/ usb-holder-bottom-offset 2)]
+                (extrude-linear {:height usb-holder-cutout-height :twist 0 :convexity 0}
+                                (offset usb-holder-clearance
+                                        (project
+                                                    (scale [1.001 1 1] usb-holder-cutout)
+                                        )
+                                )
+                ))
+        ]
+    cutout)
+  )
 
 ; Screw insert definition & position
 (defn screw-insert-shape [bottom-radius top-radius height]
@@ -1364,10 +1397,10 @@
     (def screw-offset-tm [9.5 -4.5 0])
     (def screw-offset-bm [13 -7 0]))
 (when (and (= thumb-style "cf") (false? inner-column))
-    (def screw-offset-bl [-20.5 0.5 0]) ; decrease value leads to upper-left
+    (def screw-offset-bl [-22.5 0.5 0]) ; decrease value leads to upper-left
     (def screw-offset-tm [8.5 -3.5 0])
-    (def screw-offset-bm [2.5 -2.5 0])
-    (def screw-offset-blc [-29.5 -16 0])
+    (def screw-offset-bm [3.5 -2.5 0])
+    (def screw-offset-blc [-31.5 -16 0])
     )
 (when (and (= thumb-style "mini") inner-column)
     (def screw-offset-bl [14 8 0])
@@ -1407,7 +1440,7 @@
 
 ; Wall Thickness W:\t1.65
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1)))
-(def screw-insert-screw-holes  (screw-insert-all-shapes 1.7 1.7 350))
+(def screw-insert-screw-holes  (screw-insert-all-shapes 2.25 2.25 350))
 
 ; Connectors between outer column and right wall when 1.5u keys are used
 (def pinky-connectors
@@ -1451,10 +1484,10 @@
                (key-place lastcol (inc row) web-post-tr))))
 ))))
 
-(def usb-trrs-holder-space (->> (union usb-holder-space trrs-notch usb-holder-notch)
-                                (translate [-2.5 9.9 0])
-                                ))
-(def external-holder (import "./pro micro holder.stl"))
+;(def usb-trrs-holder-space (->> (union usb-holder-space trrs-notch usb-holder-notch)
+                                ;(translate [-2.5 9.9 0])
+                                ;))
+;(def external-holder (import "./pro micro holder.stl"))
 (def model-right (difference
                    (union
                      key-holes
@@ -1467,13 +1500,13 @@
                      thumb-connector-type
                      (difference (union case-walls
                                         screw-insert-outers)
-                                 usb-trrs-holder-space
+                                 usb-holder-space
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 
 (spit "things/right.scad"
       (write-scad model-right #_usb-trrs-holder-space
-                  #_(->> external-holder (translate [-174.3 -81.5 0]))
+                  #_(->> usb-holder-stl (translate [-46 41.9 0]))
                   ))
 ; handle unnecessary mirroring of hotswap-holder
 (def single-plate-left
@@ -1546,7 +1579,7 @@
                      thumb-connector-type
                      (difference (union case-walls
                                         screw-insert-outers)
-                                 usb-trrs-holder-space
+                                 usb-holder-space
                                  screw-insert-holes))
                    (translate [0 0 -20] (cube 350 350 40))))
 (spit "things/left.scad"
