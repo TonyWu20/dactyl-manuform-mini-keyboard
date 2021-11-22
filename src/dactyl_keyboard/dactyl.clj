@@ -1414,7 +1414,7 @@
 
 ; Wall Thickness W:\t1.65
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1)))
-(def screw-insert-screw-holes  (screw-insert-all-shapes 1.7 1.7 350))
+(def screw-insert-screw-holes  (screw-insert-all-shapes 2.25 2.25 350))
 
 ; Connectors between outer column and right wall when 1.5u keys are used
 (def pinky-connectors
