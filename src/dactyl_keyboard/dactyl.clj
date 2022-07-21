@@ -44,7 +44,7 @@
           (>= column 4) [0 -14 5.64]    ; original [0 -5.8 5.64]
           :else [0 0 0])))
 
-(def thumb-offsets [6 -3 4])
+(def thumb-offsets [6 -3 2])
 
 (def keyboard-z-offset 12)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
@@ -121,15 +121,15 @@
         plate-half (union top-wall
                           left-wall
                           (if create-side-nubs? (with-fn 100 side-nub) ()))
-        hotswap-holder (->> (import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
-                            (translate [0 0 3.5])
-                            )
+        ; hotswap-holder (->> (import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
+                            ; (translate [0 0 3.5])
+                            ; )
         ]
             (difference (union plate-half
                        (->> plate-half
                             (mirror [1 0 0])
                             (mirror [0 1 0]))
-                       hotswap-holder
+                       ; hotswap-holder
                        )
                  (->>
                 top-nub-pair
@@ -1389,7 +1389,7 @@
     (def screw-offset-br [-3.5 -6.5 0]))
 (when (and (false? pinky-15u) (false? extra-row))
     (def screw-offset-tr [-1.4 9.5 0])
-    (def screw-offset-br [-6.0 13.5 0]))
+    (def screw-offset-br [-6.0 11.5 0]))
     
 ; Offsets for the screw inserts dependent on thumb-style & inner-column
 (when (and (= thumb-style "cf") inner-column)
@@ -1397,10 +1397,10 @@
     (def screw-offset-tm [9.5 -4.5 0])
     (def screw-offset-bm [13 -7 0]))
 (when (and (= thumb-style "cf") (false? inner-column))
-    (def screw-offset-bl [-22.5 0.5 0]) ; decrease value leads to upper-left
+    (def screw-offset-bl [-21.5 -3.5 0]) ; decrease value leads to upper-left
     (def screw-offset-tm [8.5 -3.5 0])
     (def screw-offset-bm [3.5 -2.5 0])
-    (def screw-offset-blc [-31.5 -16 0])
+    (def screw-offset-blc [-28.5 -18 0])
     )
 (when (and (= thumb-style "mini") inner-column)
     (def screw-offset-bl [14 8 0])
@@ -1535,15 +1535,11 @@
         plate-half (union top-wall
                           left-wall
                           (if create-side-nubs? (with-fn 100 side-nub) ()))
-        hotswap-holder (->> (import "../src/dactyl_keyboard/hot_swap_plate_mod.stl")
-                            (translate [0 0 3.5])
-                            (mirror [-1 0 0]))
         ]
             (difference (union plate-half
                        (->> plate-half
                             (mirror [1 0 0])
                             (mirror [0 1 0]))
-                       hotswap-holder
                        )
                  (->>
                 top-nub-pair
